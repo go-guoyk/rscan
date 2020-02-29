@@ -22,10 +22,11 @@ var (
 	optPrefixes  string
 )
 
-const Others = "OTHERS"
-
 var (
-	data = map[string]int64{Others: 0}
+	knownPrefixes []string
+
+	data   = map[string]int64{}
+	others int64
 )
 
 func exit(err *error) {
@@ -48,6 +49,7 @@ func main() {
 	flag.StringVar(&optPrefixes, "prefixes", "prefixes.txt", "known prefixes file")
 	flag.Parse()
 
+	// load known prefixes
 	var content []byte
 	if content, err = ioutil.ReadFile(optPrefixes); err != nil {
 		return
@@ -56,12 +58,16 @@ func main() {
 	lines := bytes.Split(content, []byte{'\n'})
 	for _, line := range lines {
 		lineStr := strings.TrimSpace(string(line))
-		if len(lineStr) == 0 {
-			continue
+		if len(lineStr) > 0 {
+			knownPrefixes = append(knownPrefixes, lineStr)
 		}
-		data[lineStr] = 0
 	}
 
+	sort.Slice(knownPrefixes, func(i, j int) bool {
+		return len(knownPrefixes[i]) > len(knownPrefixes[j])
+	})
+
+	// redis client
 	r := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", optHost, optPort),
 		DB:       optDB,
@@ -73,6 +79,7 @@ func main() {
 		return
 	}
 
+	// scan
 	var cursor uint64
 	var total int64
 	for {
@@ -82,20 +89,18 @@ func main() {
 			return
 		}
 		// analysis key
+	outerLoop:
 		for _, key := range keys {
-			found := false
-			for pfx, count := range data {
+			for _, pfx := range knownPrefixes {
 				if strings.HasPrefix(key, pfx) {
-					found = true
-					data[pfx] = count + 1
-					break
+					data[pfx]++
+					continue outerLoop
 				}
 			}
-			if !found {
-				data[Others] = data[Others] + 1
-				if data[Others] < 100 {
-					log.Println("Not Matched:", key)
-				}
+			// not found
+			others++
+			if others < 100 {
+				log.Println("Not Matched:", key)
 			}
 		}
 		// total count
@@ -112,20 +117,17 @@ func main() {
 		}
 	}
 
+	// output
 	log.Println("------------------------------")
 
-	var keys []string
-	for key := range data {
-		keys = append(keys, key)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return data[keys[i]] < data[keys[j]]
+	sort.Slice(knownPrefixes, func(i, j int) bool {
+		return data[knownPrefixes[i]] < data[knownPrefixes[j]]
 	})
 
-	for _, key := range keys {
+	for _, key := range knownPrefixes {
 		log.Printf("Prefix: %s => %d", key, data[key])
 	}
 
 	log.Printf("Total: %d", total)
+	log.Printf("Others: %d", others)
 }
