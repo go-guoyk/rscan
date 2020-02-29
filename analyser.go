@@ -1,12 +1,8 @@
 package main
 
 import (
-	"regexp"
 	"sort"
-)
-
-var (
-	KeyVariationPattern = regexp.MustCompile(`[A-Fa-f0-9]+$`)
+	"strings"
 )
 
 type AnalyserSample struct {
@@ -24,8 +20,11 @@ func NewAnalyser(max int64) *Analyser {
 }
 
 func (a *Analyser) Add(key string) {
-	pfx := KeyVariationPattern.ReplaceAllString(key, "")
-	a.samples[pfx] = a.samples[pfx] + 1
+	idx := strings.LastIndex(key, ".")
+	if idx > 0 {
+		key = key[0:idx]
+	}
+	a.samples[key] = a.samples[key] + 1
 }
 
 func (a *Analyser) Samples() (ret []AnalyserSample) {
