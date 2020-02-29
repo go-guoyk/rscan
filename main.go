@@ -127,7 +127,7 @@ func main() {
 	var known int64
 	for _, key := range knownPrefixes {
 		known += data[key]
-		log.Printf("Prefix: %05d, %s", data[key], key)
+		log.Printf("% 12d: %s", data[key], key)
 	}
 
 	log.Printf("Known: %d", known)
