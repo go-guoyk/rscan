@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	optHost     string
-	optPort     int
-	optDB       int
-	optPassword string
-	optBatch    int64
-	optLimit    int64
+	optHost       string
+	optPort       int
+	optDB         int
+	optPassword   string
+	optBatch      int64
+	optLimit      int64
+	optMaxSamples int64
 )
 
 func exit(err *error) {
@@ -32,6 +33,7 @@ func main() {
 	flag.IntVar(&optPort, "port", 6379, "redis port")
 	flag.IntVar(&optDB, "db", 0, "redis database")
 	flag.StringVar(&optPassword, "password", "", "redis password")
+	flag.Int64Var(&optMaxSamples, "max-samples", 10000, "max samples in memory")
 	flag.Int64Var(&optBatch, "batch", 1000, "batch size of SCAN command")
 	flag.Int64Var(&optLimit, "limit", 0, "limit of total keys scanned")
 	flag.Parse()
@@ -47,7 +49,7 @@ func main() {
 		return
 	}
 
-	analyzer := NewAnalyser()
+	analyzer := NewAnalyser(optMaxSamples)
 
 	var cursor uint64
 	var total int64
@@ -61,17 +63,12 @@ func main() {
 		for _, key := range keys {
 			analyzer.Add(key)
 		}
-		// prevent oom or logic error
-		if len(analyzer.Samples) > 10000 {
-			log.Println("Analyzer is becoming too large")
-			break
-		}
 		// total count
 		total += int64(len(keys))
 		log.Printf("Scaned: %d", total)
 		// limit check
 		if optLimit > 0 && total >= optLimit {
-			log.Println("Limit reached")
+			log.Println("limit reached")
 			break
 		}
 		// end of scan
@@ -83,8 +80,8 @@ func main() {
 	log.Println("------------------------------")
 
 	log.Printf("Total: %d", total)
-	for pfx, count := range analyzer.Samples {
-		log.Printf("Prefix: %s = %d", pfx, count)
+	for _, sam := range analyzer.Samples() {
+		log.Printf("Prefix: %s\t => %d", sam.Prefix, sam.Count)
 	}
 
 }
