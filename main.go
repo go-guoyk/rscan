@@ -124,10 +124,13 @@ func main() {
 		return data[knownPrefixes[i]] < data[knownPrefixes[j]]
 	})
 
+	var known int64
 	for _, key := range knownPrefixes {
-		log.Printf("Prefix: %s => %d", key, data[key])
+		known += data[key]
+		log.Printf("Prefix: %05d, %s", data[key], key)
 	}
 
+	log.Printf("Known: %d", known)
 	log.Printf("Total: %d", total)
 	log.Printf("Others: %d", others)
 }
