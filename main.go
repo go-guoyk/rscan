@@ -105,7 +105,6 @@ func main() {
 		}
 		// total count
 		total += int64(len(keys))
-		log.Printf("Scaned: %d", total)
 		// limit check
 		if optLimit > 0 && total >= optLimit {
 			log.Println("limit reached")
