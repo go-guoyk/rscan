@@ -1,21 +1,31 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/go-redis/redis"
+	"io/ioutil"
 	"log"
 	"os"
+	"sort"
+	"strings"
 )
 
 var (
-	optHost       string
-	optPort       int
-	optDB         int
-	optPassword   string
-	optBatch      int64
-	optLimit      int64
-	optMaxSamples int64
+	optHost      string
+	optPort      int
+	optDB        int
+	optPassword  string
+	optScanBatch int64
+	optLimit     int64
+	optPrefixes  string
+)
+
+const Others = "OTHERS"
+
+var (
+	data = map[string]int64{Others: 0}
 )
 
 func exit(err *error) {
@@ -33,10 +43,20 @@ func main() {
 	flag.IntVar(&optPort, "port", 6379, "redis port")
 	flag.IntVar(&optDB, "db", 0, "redis database")
 	flag.StringVar(&optPassword, "password", "", "redis password")
-	flag.Int64Var(&optMaxSamples, "max-samples", 10000, "max samples in memory")
-	flag.Int64Var(&optBatch, "batch", 1000, "batch size of SCAN command")
+	flag.Int64Var(&optScanBatch, "scan-batch", 1000, "batch size of SCAN command")
 	flag.Int64Var(&optLimit, "limit", 0, "limit of total keys scanned")
+	flag.StringVar(&optPrefixes, "prefixes", "prefixes.txt", "known prefixes file")
 	flag.Parse()
+
+	var content []byte
+	if content, err = ioutil.ReadFile(optPrefixes); err != nil {
+		return
+	}
+
+	lines := bytes.Split(content, []byte{'\n'})
+	for _, line := range lines {
+		data[string(bytes.TrimSpace(line))] = 0
+	}
 
 	r := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", optHost, optPort),
@@ -49,19 +69,30 @@ func main() {
 		return
 	}
 
-	analyzer := NewAnalyser(optMaxSamples)
-
 	var cursor uint64
 	var total int64
 	for {
 		// scan keys
 		var keys []string
-		if keys, cursor, err = r.Scan(cursor, "", optBatch).Result(); err != nil {
+		if keys, cursor, err = r.Scan(cursor, "", optScanBatch).Result(); err != nil {
 			return
 		}
-		// add keys to analyzer
+		// analysis key
 		for _, key := range keys {
-			analyzer.Add(key)
+			found := false
+			for pfx, count := range data {
+				if strings.HasPrefix(key, pfx) {
+					found = true
+					data[pfx] = count + 1
+					break
+				}
+			}
+			if !found {
+				data[Others] = data[Others] + 1
+				if data[Others] < 100 {
+					log.Println("Not Matched:", key)
+				}
+			}
 		}
 		// total count
 		total += int64(len(keys))
@@ -79,9 +110,18 @@ func main() {
 
 	log.Println("------------------------------")
 
-	log.Printf("Total: %d", total)
-	for _, sam := range analyzer.Samples() {
-		log.Printf("Prefix: %s* => %d", sam.Prefix, sam.Count)
+	var keys []string
+	for key := range data {
+		keys = append(keys, key)
 	}
 
+	sort.Slice(keys, func(i, j int) bool {
+		return data[keys[i]] < data[keys[j]]
+	})
+
+	for _, key := range keys {
+		log.Printf("Prefix: %s => %d", key, data[key])
+	}
+
+	log.Printf("Total: %d", total)
 }
