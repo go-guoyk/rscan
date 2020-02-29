@@ -36,7 +36,7 @@ func (a *Analyser) Samples() (ret []AnalyserSample) {
 		})
 	}
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Count > ret[j].Count
+		return ret[i].Count < ret[j].Count
 	})
 	return
 }
