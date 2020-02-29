@@ -55,7 +55,11 @@ func main() {
 
 	lines := bytes.Split(content, []byte{'\n'})
 	for _, line := range lines {
-		data[string(bytes.TrimSpace(line))] = 0
+		lineStr := strings.TrimSpace(string(line))
+		if len(lineStr) == 0 {
+			continue
+		}
+		data[lineStr] = 0
 	}
 
 	r := redis.NewClient(&redis.Options{
