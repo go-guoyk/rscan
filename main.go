@@ -81,7 +81,7 @@ func main() {
 
 	log.Printf("Total: %d", total)
 	for _, sam := range analyzer.Samples() {
-		log.Printf("Prefix: %s => %d", sam.Prefix, sam.Count)
+		log.Printf("Prefix: %s* => %d", sam.Prefix, sam.Count)
 	}
 
 }

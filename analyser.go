@@ -22,7 +22,7 @@ func NewAnalyser(max int64) *Analyser {
 func (a *Analyser) Add(key string) {
 	idx := strings.LastIndex(key, ".")
 	if idx > 0 {
-		key = key[0:idx]
+		key = key[0 : idx+1]
 	}
 	a.samples[key] = a.samples[key] + 1
 }
