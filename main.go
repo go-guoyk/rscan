@@ -125,12 +125,12 @@ func main() {
 	})
 
 	var known int64
-	for _, key := range knownPrefixes {
-		known += data[key]
-		log.Printf("% 12d: %s", data[key], key)
+	for _, pfx := range knownPrefixes {
+		known += data[pfx]
+		log.Printf("% 12d: %s", data[pfx], pfx)
 	}
 
-	log.Printf("Known: %d", known)
 	log.Printf("Total: %d", total)
+	log.Printf("Known: %d", known)
 	log.Printf("Others: %d", others)
 }
