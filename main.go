@@ -262,6 +262,8 @@ func main() {
 	if moreUnknowns {
 		log.Println("更多未匹配键已被省略")
 	}
+	log.Println("------------------------------------")
+	log.Println("------------------------------------")
 	log.Println("------------- 已匹配键 -----------------")
 	sortKnownPrefixesByCount(knownPrefixes)
 	for _, pfx := range knownPrefixes {
@@ -279,9 +281,11 @@ func main() {
 			ets = eas * summary.Count
 		}
 		log.Printf("前缀: %s", pfx)
-		log.Printf("数量: % 12d, 估计平均键值大小: % 12d, 估计总键值大小: % 12d, 类型: %s%s", summary.Count, eas, ets, summary.Type, extra)
+		log.Printf("数量: % 12d, 估计平均大小: % 12d, 估计总大小: % 12d, 类型: %s%s", summary.Count, eas, ets, summary.Type, extra)
 		log.Println("------------------------------------")
 	}
+	log.Println("------------------------------------")
+	log.Println("------------------------------------")
 	log.Println("------------- 总计 -----------------")
 	log.Printf("总数量：%d", countTotal)
 	log.Printf("未匹配键数量：%d", countUnknown)
