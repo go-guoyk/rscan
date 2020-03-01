@@ -250,7 +250,10 @@ func main() {
 	log.Println("注意: 键值大小使用 STRLEN, ZCARD, SCARD, LLEN, HLEN 等计算，不等于内存占用空间")
 	log.Println("注意: 各个前缀的键值大小汇总基于采样与平均值，并不精确")
 	log.Println("注意: 标注为（混合类型）的前缀表明同一个前缀的键值有不同类型")
+	log.Println("------------------------------------")
+	log.Println("------------------------------------")
 	log.Println("------------- 未匹配键 -----------------")
+	sort.Strings(unknowns)
 	for _, key := range unknowns {
 		log.Printf("键名: %s", key)
 		var typ string
