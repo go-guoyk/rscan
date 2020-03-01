@@ -19,11 +19,11 @@ var (
 )
 
 type Summary struct {
-	Count       int64
-	Type        string
-	SamplesSize int64
-	Samples     int64
-	MultiType   bool
+	Count        int64
+	Type         string
+	SamplesSize  int64
+	SamplesCount int64
+	MultiType    bool
 }
 
 var (
@@ -207,7 +207,7 @@ func main() {
 				// count
 				summary.Count++
 				// sample
-				if summary.Samples < optMaxSamples {
+				if summary.SamplesCount < optMaxSamples {
 					var typ string
 					var size int64
 					if typ, size, err = inspectKey(key); err != nil {
@@ -221,7 +221,7 @@ func main() {
 					}
 					// size
 					summary.SamplesSize += size
-					summary.Samples++
+					summary.SamplesCount++
 				}
 				return
 			}
@@ -246,7 +246,7 @@ func main() {
 
 	// output
 	log.Println("注意: 键值大小使用 STRLEN, ZCARD, SCARD, LLEN, HLEN 等计算，不等于内存占用空间")
-	log.Println("注意: 基于前缀的键值大小汇总基于采样与平均值，并不精确")
+	log.Println("注意: 各个前缀的键值大小汇总基于采样与平均值，并不精确")
 	log.Println("注意: 标注为（混合类型）的前缀表明同一个前缀的键值有不同类型")
 	log.Println("------------- 未匹配键 -----------------")
 	for _, key := range unknowns {
@@ -266,12 +266,18 @@ func main() {
 	sortKnownPrefixesByCount(knownPrefixes)
 	for _, pfx := range knownPrefixes {
 		summary := knows[pfx]
+		if summary.Count == 0 {
+			continue
+		}
 		var extra string
 		if summary.MultiType {
 			extra = "(混合类型)"
 		}
-		eas := int64(float64(summary.SamplesSize) / float64(summary.Samples))
-		ets := eas * summary.Count
+		var eas, ets int64
+		if summary.SamplesCount > 0 {
+			eas = int64(float64(summary.SamplesSize) / float64(summary.SamplesCount))
+			ets = eas * summary.Count
+		}
 		log.Printf("前缀: %s", pfx)
 		log.Printf("数量: % 12d, 估计平均键值大小: % 12d, 估计总键值大小: % 12d, 类型: %s%s", summary.Count, eas, ets, summary.Type, extra)
 		log.Println("------------------------------------")
