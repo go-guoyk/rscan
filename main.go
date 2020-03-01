@@ -261,7 +261,7 @@ func main() {
 		if typ, size, err = inspectKey(key); err != nil {
 			return
 		}
-		log.Printf("大小: % 12d, 类型: %s", size, typ)
+		log.Printf("大小: % 8d, 类型: %s", size, typ)
 		log.Println("------------------------------------")
 	}
 	if moreUnknowns {
@@ -286,7 +286,7 @@ func main() {
 			ets = eas * summary.Count
 		}
 		log.Printf("前缀: %s", pfx)
-		log.Printf("数量: % 12d, 估计平均大小: % 12d, 估计总大小: % 12d, 类型: %s%s", summary.Count, eas, ets, summary.Type, extra)
+		log.Printf("数量: % 8d, 估计平均大小: % 8d, 估计总大小: % 12d, 类型: %s%s", summary.Count, eas, ets, summary.Type, extra)
 		log.Println("------------------------------------")
 	}
 	log.Println("------------------------------------")
