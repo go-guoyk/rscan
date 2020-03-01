@@ -256,7 +256,7 @@ func main() {
 		if typ, size, err = inspectKey(key); err != nil {
 			return
 		}
-		log.Printf("键值大小: % 12d, 类型: %s", size, typ)
+		log.Printf("大小: % 12d, 类型: %s", size, typ)
 		log.Println("------------------------------------")
 	}
 	if moreUnknowns {
