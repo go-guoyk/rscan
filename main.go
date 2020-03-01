@@ -165,6 +165,8 @@ func main() {
 	var err error
 	defer exit(&err)
 
+	log.SetOutput(os.Stdout)
+
 	flag.StringVar(&optHost, "host", "127.0.0.1", "redis 主机")
 	flag.IntVar(&optPort, "port", 6379, "redis 端口")
 	flag.IntVar(&optDB, "db", 0, "redis 数据库")
